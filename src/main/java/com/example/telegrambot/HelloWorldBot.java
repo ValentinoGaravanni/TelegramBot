@@ -1,12 +1,12 @@
 package com.example.telegrambot;
 
+import com.example.telegrambot.processors.Processor;
+import com.example.telegrambot.services.SendMessageService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 @Component
 public class HelloWorldBot extends TelegramLongPollingBot {
@@ -14,6 +14,11 @@ public class HelloWorldBot extends TelegramLongPollingBot {
     private String username;
     @Value("${telegram.bot.token}")
     private String token;
+
+    private SendMessageService sendMessageService;
+
+    private Processor processor;
+
 
     @Override
     public String getBotUsername() {
@@ -27,19 +32,16 @@ public class HelloWorldBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        if (update.hasMessage()) {
-            Message message = update.getMessage();
-            if (message.hasText()) {
-                String text = message.getText();
-                SendMessage sm = new SendMessage();
-                sm.setText("Ви відправили: " + text);
-                sm.setChatId(String.valueOf(message.getChatId()));
-                try {
-                    execute(sm);
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
+        processor.process(update);
+    }
+
+    @Autowired
+    public void setProcessor(Processor processor) {
+        this.processor = processor;
+    }
+
+    @Autowired
+    public void setSendMessageService(SendMessageService sendMessageService) {
+        this.sendMessageService = sendMessageService;
     }
 }
